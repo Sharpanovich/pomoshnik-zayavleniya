@@ -36,7 +36,10 @@ $uploaderCs = Join-Path $dir 'GitHubUploader.cs'
 if (Test-Path $uploaderCs) {
     $uploaderExeName = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('0JfQsNCz0YDRg9C30LrQsCDQvdCwIEdpdEh1Yi5leGU='))
     $uploaderOut = Join-Path $dir $uploaderExeName
-    & $csc /nologo /target:winexe /codepage:65001 /out:$uploaderOut /win32icon:"$(Join-Path $dir 'app.ico')" /r:System.Web.Extensions.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll $uploaderCs
+    & $csc /nologo /target:winexe /codepage:65001 /out:$uploaderOut /win32icon:"$(Join-Path $dir 'app.ico')" `
+        /r:"$(Join-Path $frameworkDir 'System.IO.Compression.dll')" `
+        /r:"$(Join-Path $frameworkDir 'System.IO.Compression.FileSystem.dll')" `
+        /r:System.Web.Extensions.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll $uploaderCs
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Gotovo! Uploader sobran: $uploaderOut" -ForegroundColor Green
     }
