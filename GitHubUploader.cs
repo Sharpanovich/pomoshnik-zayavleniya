@@ -594,7 +594,10 @@ namespace GitHubUploaderApp
                 "release_notes.txt",
                 ".gitignore",
                 "GitHubUploader.cs",
-                "Шаблоны\\094729862.docx"
+                "Шаблоны\\094729862.docx",
+                "Новые заявления\\.gitkeep",
+                "Исходные заявления\\.gitkeep",
+                "Исправленные заявления\\.gitkeep"
             };
 
             // Получаем ветку main или master
@@ -726,14 +729,31 @@ namespace GitHubUploaderApp
                     AppendLog("Создан новый релиз: " + releaseHtmlUrl);
                 }
 
-                // Прикрепление файла Помощник по заявлениям.exe
+                // Удаление старых ассетов релиза с такими же именами (или с искажёнными _._.exe), чтобы избежать ошибки 422
+                try
+                {
+                    string assetsJson = GitHubApi("GET", string.Format("https://api.github.com/repos/{0}/{1}/releases/{2}/assets", owner, repoName, releaseId), token, null);
+                    var assetsList = js.Deserialize<object[]>(assetsJson);
+                    foreach (Dictionary<string, object> a in assetsList)
+                    {
+                        string aname = (string)a["name"];
+                        if (aname == "Pomoshnik_po_zayavleniyam.exe" || aname == "_._.exe" || aname.StartsWith("_._") || aname.StartsWith("Pomoshnik_po_zayavleniyam_"))
+                        {
+                            int aid = Convert.ToInt32(a["id"]);
+                            try { GitHubApi("DELETE", string.Format("https://api.github.com/repos/{0}/{1}/releases/assets/{2}", owner, repoName, aid), token, null); } catch { }
+                        }
+                    }
+                }
+                catch { }
+
+                // Прикрепление файла Помощник по заявлениям.exe (используем безопасное имя Pomoshnik_po_zayavleniyam.exe)
                 string exePath = Path.Combine(_projectDir, "Помощник по заявлениям.exe");
                 if (attachExe && File.Exists(exePath))
                 {
-                    AppendLog("  Прикрепление к релизу: Помощник_по_заявлениям.exe...");
+                    AppendLog("  Прикрепление к релизу: Pomoshnik_po_zayavleniyam.exe...");
                     byte[] exeBytes = File.ReadAllBytes(exePath);
                     string uploadUrl = string.Format("https://uploads.github.com/repos/{0}/{1}/releases/{2}/assets?name={3}",
-                        owner, repoName, releaseId, Uri.EscapeDataString("Помощник_по_заявлениям.exe"));
+                        owner, repoName, releaseId, "Pomoshnik_po_zayavleniyam.exe");
                     try { UploadBinaryAsset(uploadUrl, token, exeBytes); }
                     catch (Exception ex) { AppendLog("  Примечание (asset exe): " + ex.Message); }
                 }
@@ -741,11 +761,11 @@ namespace GitHubUploaderApp
                 // Прикрепление полного ZIP архива
                 if (attachZip)
                 {
-                    string zipName = string.Format("Помощник_по_заявлениям_{0}.zip", releaseTag);
+                    string zipName = string.Format("Pomoshnik_po_zayavleniyam_{0}.zip", releaseTag);
                     AppendLog("  Создание и прикрепление архива: " + zipName + "...");
                     byte[] zipBytes = CreateReleaseZip();
                     string uploadUrl = string.Format("https://uploads.github.com/repos/{0}/{1}/releases/{2}/assets?name={3}",
-                        owner, repoName, releaseId, Uri.EscapeDataString(zipName));
+                        owner, repoName, releaseId, zipName);
                     try { UploadBinaryAsset(uploadUrl, token, zipBytes); }
                     catch (Exception ex) { AppendLog("  Примечание (asset zip): " + ex.Message); }
                 }
