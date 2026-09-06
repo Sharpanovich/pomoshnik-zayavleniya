@@ -1482,139 +1482,248 @@ namespace ZayavleniyaApp
             Text = "Помощник по заявлениям";
             Font = new Font("Segoe UI", 9.5f);
             StartPosition = FormStartPosition.CenterScreen;
+            BackColor = Color.FromArgb(248, 250, 252);
 
             var wa = Screen.PrimaryScreen.WorkingArea;
-            int fw = Math.Min(780, wa.Width - 16);
-            int fh = Math.Min(660, wa.Height - 40);
-            MinimumSize = new Size(fw, fh);
+            int fw = Math.Min(820, wa.Width - 16);
+            int fh = Math.Min(700, wa.Height - 40);
+            MinimumSize = new Size(760, 600);
             Size = new Size(fw, fh);
 
-            var lbl1 = new Label { Text = "Папка проекта:", Location = new Point(12, 12), AutoSize = true };
+            // --- ВЕРХНЯЯ ПАНЕЛЬ: ЗАГОЛОВОК И ПАПКА ПРОЕКТА ---
+            var pnlHeader = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 74,
+                BackColor = Color.White
+            };
+            pnlHeader.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                    e.Graphics.DrawLine(pen, 0, pnlHeader.Height - 1, pnlHeader.Width, pnlHeader.Height - 1);
+            };
+
+            var lblAppTitle = new Label
+            {
+                Text = "Помощник по заявлениям",
+                Font = new Font("Segoe UI", 13.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                Location = new Point(16, 12),
+                AutoSize = true
+            };
+            pnlHeader.Controls.Add(lblAppTitle);
+
+            var lblAppSub = new Label
+            {
+                Text = "Автоматизированная подготовка, исправление и генерация судебных заявлений",
+                Font = new Font("Segoe UI", 8.5f),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Location = new Point(18, 40),
+                AutoSize = true
+            };
+            pnlHeader.Controls.Add(lblAppSub);
+
             txtDir = new TextBox
             {
-                Location = new Point(12, 32),
-                Width = 640,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                Location = new Point(pnlHeader.Width - 440, 22),
+                Width = 330,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Font = new Font("Segoe UI", 9f),
+                ReadOnly = true
             };
             string here = AppDomain.CurrentDomain.BaseDirectory;
             if (Directory.Exists(Path.Combine(here, "Исходные заявления")) || Directory.Exists(Path.Combine(here, "Исправленные заявления")))
                 txtDir.Text = here;
+
             btnBrowse = new Button
             {
-                Text = "Обзор...",
-                Location = new Point(658, 30),
-                Size = new Size(84, 25),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
+                Text = "Папка...",
+                Location = new Point(pnlHeader.Width - 102, 20),
+                Size = new Size(86, 28),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(51, 65, 85),
+                Font = new Font("Segoe UI", 9f),
+                Cursor = Cursors.Hand
             };
+            btnBrowse.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
             btnBrowse.Click += (s, e) =>
             {
                 using (var fb = new FolderBrowserDialog())
                 {
-                    fb.Description = "Выберите папку проекта (в ней программа создаст папки «Исходные заявления», «Исправленные заявления», «Новые заявления»)";
+                    fb.Description = "Выберите папку проекта";
                     if (Directory.Exists(txtDir.Text)) fb.SelectedPath = txtDir.Text;
                     if (fb.ShowDialog(this) == DialogResult.OK) txtDir.Text = fb.SelectedPath;
                 }
             };
+            pnlHeader.Controls.Add(txtDir);
+            pnlHeader.Controls.Add(btnBrowse);
 
-            btnRun = new Button
-            {
-                Text = "ОБРАБОТАТЬ ЗАЯВЛЕНИЯ  ▶\nшаг 1 — автоисправление документов   •   шаг 2 — указание сумм по каждому файлу",
-                Location = new Point(12, 64),
-                Size = new Size(730, 56),
-                BackColor = Color.FromArgb(227, 242, 253),
-                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
-            };
-            btnRun.Click += (s, e) => RunFull();
-
+            // --- ГЛАВНОЕ ДЕЙСТВИЕ: СОЗДАТЬ НОВОЕ ЗАЯВЛЕНИЕ ---
             btnNew = new Button
             {
-                Text = "+ СОЗДАТЬ НОВОЕ ЗАЯВЛЕНИЕ (генератор)",
-                Location = new Point(12, 126),
-                Size = new Size(340, 34),
+                Text = "✨  СОЗДАТЬ НОВОЕ ЗАЯВЛЕНИЕ (ГЕНЕРАТОР)",
+                Location = new Point(16, 92),
+                Size = new Size(fw - 48, 50),
+                BackColor = Color.FromArgb(16, 185, 129),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 11.5f, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            btnNew.FlatAppearance.BorderSize = 0;
+            btnNew.Click += (s, e) => OpenGenerator();
+
+            // --- ВТОРИЧНЫЕ ДЕЙСТВИЯ ---
+            btnRun = new Button
+            {
+                Text = "▶  ПАКЕТНАЯ ОБРАБОТКА (исправление + ввод сумм)",
+                Location = new Point(16, 152),
+                Size = new Size(440, 40),
+                BackColor = Color.FromArgb(239, 246, 255),
+                ForeColor = Color.FromArgb(29, 78, 216),
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
-            btnNew.Click += (s, e) => OpenGenerator();
+            btnRun.FlatAppearance.BorderColor = Color.FromArgb(147, 197, 253);
+            btnRun.Click += (s, e) => RunFull();
 
             btnBatchFix = new Button
             {
-                Text = "⚡ ИСПРАВИТЬ ДАТУ ЗАКОНА (02.10.2007) В ЗАЯВЛЕНИЯХ",
-                Location = new Point(358, 126),
-                Size = new Size(384, 34),
-                BackColor = Color.FromArgb(255, 243, 224),
+                Text = "⚡  ИСПРАВИТЬ ДАТУ ЗАКОНА (02.10.2007)",
+                Location = new Point(468, 152),
+                Size = new Size(fw - 48 - 452, 40),
+                BackColor = Color.FromArgb(255, 251, 235),
+                ForeColor = Color.FromArgb(180, 83, 9),
                 Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
+            btnBatchFix.FlatAppearance.BorderColor = Color.FromArgb(252, 211, 77);
             btnBatchFix.Click += (s, e) => RunBatchFixLawDate();
 
-            // --- описание папок ---
-            var grpFolders = new GroupBox
+            // --- ПАНЕЛЬ БЫСТРОГО ДОСТУПА К ПАПКАМ ---
+            var flpFolders = new FlowLayoutPanel
             {
-                Text = "Назначение папок",
-                Location = new Point(12, 168),
-                Size = new Size(730, 110),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                Location = new Point(16, 204),
+                Size = new Size(fw - 48, 54),
+                BackColor = Color.White,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                WrapContents = false,
+                AutoScroll = false,
+                Padding = new Padding(12, 10, 12, 10)
             };
-            Action<int, string, string> addFolderRow = (yy, name, desc) =>
+            flpFolders.Paint += (s, e) =>
             {
-                grpFolders.Controls.Add(new Label { Text = name, Location = new Point(14, yy), AutoSize = true, Font = new Font("Segoe UI", 9f, FontStyle.Bold) });
-                var dl = new Label { Text = desc, Location = new Point(190, yy + 1), AutoSize = true, ForeColor = Color.FromArgb(70, 70, 70), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-                grpFolders.Controls.Add(dl);
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                {
+                    var r = flpFolders.ClientRectangle;
+                    r.Width -= 1; r.Height -= 1;
+                    e.Graphics.DrawRectangle(pen, r);
+                }
             };
-            addFolderRow(20, "Исходные заявления", "положите сюда файлы Word, которые нужно исправить");
-            addFolderRow(42, "Исправленные заявления", "здесь появятся готовые документы — останется вписать суммы");
-            addFolderRow(64, "Новые заявления", "сюда сохраняются документы, созданные генератором");
-            addFolderRow(86, "Шаблоны", "образец заявления для генератора (создаётся автоматически)");
 
-            var btnOpenNewMain = new Button
+            var lblFTitle = new Label
             {
-                Text = "📁 Открыть папку...",
-                Location = new Point(585, 60),
-                Size = new Size(130, 26),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
+                Text = "Быстрый доступ к папкам:",
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                AutoSize = true,
+                Margin = new Padding(0, 7, 12, 0)
             };
-            btnOpenNewMain.Click += (s, e) =>
+            flpFolders.Controls.Add(lblFTitle);
+
+            Action<string, string> addFolderBtn = (name, folderName) =>
             {
-                string p = Path.Combine(txtDir.Text.Trim(), "Новые заявления");
-                Directory.CreateDirectory(p);
-                try { System.Diagnostics.Process.Start("explorer.exe", p); } catch { }
+                var btn = new Button
+                {
+                    Text = name,
+                    Size = new Size(164, 32),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.FromArgb(248, 250, 252),
+                    ForeColor = Color.FromArgb(30, 41, 59),
+                    Font = new Font("Segoe UI", 9f),
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0, 1, 8, 0)
+                };
+                btn.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+                btn.Click += (s, e) =>
+                {
+                    string p = Path.Combine(txtDir.Text.Trim(), folderName);
+                    Directory.CreateDirectory(p);
+                    try { System.Diagnostics.Process.Start("explorer.exe", p); } catch { }
+                };
+                flpFolders.Controls.Add(btn);
             };
-            grpFolders.Controls.Add(btnOpenNewMain);
 
-            Controls.Add(grpFolders);
+            addFolderBtn("📁 Новые заявления", "Новые заявления");
+            addFolderBtn("📁 Исходные заявления", "Исходные заявления");
+            addFolderBtn("📁 Исправленные", "Исправленные заявления");
 
+            // --- СТАТУС И ПРОГРЕСС ---
             lblStatus = new Label
             {
                 Text = "Готово к работе.",
-                Location = new Point(12, 284),
+                Location = new Point(16, 272),
                 AutoSize = true,
-                ForeColor = Color.DimGray,
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Font = new Font("Segoe UI", 9.5f),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
 
             progress = new ProgressBar
             {
-                Location = new Point(12, 306),
-                Size = new Size(730, 18),
+                Location = new Point(16, 296),
+                Size = new Size(fw - 48, 12),
                 Style = ProgressBarStyle.Marquee,
                 MarqueeAnimationSpeed = 30,
                 Visible = false,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
 
+            // --- ЛОГ ---
+            var lblLogHeader = new Label
+            {
+                Text = "Журнал работы:",
+                Location = new Point(16, 318),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold)
+            };
+
+            var btnClearLog = new Button
+            {
+                Text = "Очистить",
+                Location = new Point(fw - 48 - 74, 314),
+                Size = new Size(74, 24),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Font = new Font("Segoe UI", 8.5f),
+                Cursor = Cursors.Hand
+            };
+            btnClearLog.FlatAppearance.BorderSize = 0;
+            btnClearLog.Click += (s, e) => txtLog.Clear();
+
             txtLog = new TextBox
             {
                 Multiline = true,
                 ReadOnly = true,
                 ScrollBars = ScrollBars.Vertical,
-                Font = new Font(FontFamily.GenericMonospace, 9f),
-                Location = new Point(12, 332),
-                Size = new Size(730, 224),
+                Font = new Font("Consolas", 9f),
+                Location = new Point(16, 342),
+                Size = new Size(fw - 48, fh - 396),
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 BackColor = Color.White
             };
 
-            Controls.AddRange(new Control[] { lbl1, txtDir, btnBrowse, grpFolders, btnRun, btnNew, btnBatchFix, lblStatus, progress, txtLog });
+            Controls.AddRange(new Control[] { pnlHeader, btnNew, btnRun, btnBatchFix, flpFolders, lblStatus, progress, lblLogHeader, btnClearLog, txtLog });
         }
 
         // создаёт структуру папок проекта, если их ещё нет
@@ -2037,6 +2146,9 @@ namespace ZayavleniyaApp
         TextBox txtAddrRoom;
         Panel midPanel, bottomBar;
         Button btnAutofill;
+        Button btnBrowseTemplate;
+        Panel pnlCardDebtors, pnlCardAddr, pnlCardSums;
+        ToolTip ttTemplate = new ToolTip();
         readonly Random _rnd = new Random();
         string _customTemplatePath;
         TextBox txtTemplate;
@@ -2146,18 +2258,8 @@ namespace ZayavleniyaApp
 
         public static void SwitchToRussian()
         {
-            try
-            {
-                foreach (InputLanguage lang in InputLanguage.InstalledInputLanguages)
-                {
-                    if (lang.Culture.TwoLetterISOLanguageName.Equals("ru", StringComparison.OrdinalIgnoreCase))
-                    {
-                        InputLanguage.CurrentInputLanguage = lang;
-                        break;
-                    }
-                }
-            }
-            catch { }
+            // Отключено: системная раскладка Windows больше не перехватывается,
+            // чтобы пользователь мог комфортно вводить любые символы без принудительного сброса языка.
         }
 
         public static char EnToRuChar(char c)
@@ -2192,34 +2294,56 @@ namespace ZayavleniyaApp
             return sb.ToString();
         }
 
+        public static string FixAddressNumber(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return input;
+            string s = input.Replace('\\', '/');
+            s = FixLatinHomoglyphs(s);
+            return s;
+        }
+
         public static void HookRussianLayout(TextBox tb, bool isAddressNumber = false)
         {
             if (tb == null) return;
-            tb.Enter += (s, e) => SwitchToRussian();
+
             tb.KeyPress += (s, e) =>
             {
                 char c = e.KeyChar;
                 if (char.IsControl(c)) return;
-                char converted = c;
+
                 if (isAddressNumber)
                 {
+                    if (c == '\\')
+                    {
+                        e.KeyChar = '/';
+                        return;
+                    }
+                    if (char.IsDigit(c) || c == '/' || c == '.' || c == ',' || c == '-' || c == ' ' || c == '#' || c == '№')
+                    {
+                        return;
+                    }
                     string hom = FixLatinHomoglyphs(c.ToString());
-                    if (hom.Length > 0 && hom[0] != c) converted = hom[0];
+                    if (hom.Length > 0 && hom[0] != c)
+                    {
+                        e.KeyChar = hom[0];
+                        return;
+                    }
+                    return;
                 }
-                if (converted == c)
-                {
-                    converted = EnToRuChar(c);
-                }
+
+                char converted = EnToRuChar(c);
                 if (converted != c)
                 {
                     e.KeyChar = converted;
                 }
             };
+
             tb.TextChanged += (s, e) =>
             {
                 string cur = tb.Text;
                 if (string.IsNullOrEmpty(cur)) return;
-                string fixedText = isAddressNumber ? FixLayout(FixLatinHomoglyphs(cur)) : FixLayout(cur);
+
+                string fixedText = isAddressNumber ? FixAddressNumber(cur) : FixLayout(cur);
                 if (cur != fixedText)
                 {
                     int sel = tb.SelectionStart;
@@ -2243,7 +2367,7 @@ namespace ZayavleniyaApp
         public static string FormatHouse(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return "";
-            string s = FixLayout(FixLatinHomoglyphs(input.Trim().TrimEnd(',', '.'))).ToUpperInvariant();
+            string s = FixAddressNumber(input.Trim().TrimEnd(',', '.')).ToUpperInvariant();
             var m = Regex.Match(s, @"^(?:Д\.\s*|Д\s+|ДОМ\s*(?:№|N)?\s*|№\s*)(.+)$", RegexOptions.IgnoreCase);
             if (m.Success) s = m.Groups[1].Value.Trim();
             return "дом №" + s;
@@ -2265,12 +2389,32 @@ namespace ZayavleniyaApp
             return l;
         }
 
+        Panel CreateCardPanel()
+        {
+            var pnl = new Panel
+            {
+                BackColor = Color.White
+            };
+            pnl.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                {
+                    var r = pnl.ClientRectangle;
+                    r.Width -= 1;
+                    r.Height -= 1;
+                    e.Graphics.DrawRectangle(pen, r);
+                }
+            };
+            return pnl;
+        }
+
         void BuildUi()
         {
             Text = "Генератор заявлений";
             Font = new Font("Segoe UI", 10f);
             StartPosition = FormStartPosition.CenterParent;
             KeyPreview = true;
+            BackColor = Color.FromArgb(248, 250, 252);
             KeyDown += (s, e) =>
             {
                 if (e.Control && e.KeyCode == Keys.Enter)
@@ -2278,40 +2422,63 @@ namespace ZayavleniyaApp
                     e.SuppressKeyPress = true;
                     Generate();
                 }
+                else if ((e.Control && e.Shift && e.KeyCode == Keys.T) || e.KeyCode == Keys.F12)
+                {
+                    e.SuppressKeyPress = true;
+                    Autofill();
+                }
             };
 
             var wa = Screen.PrimaryScreen.WorkingArea;
-            int w = Math.Min(840, wa.Width - 16);
-            int h = Math.Min(690, wa.Height - 40);
-            MinimumSize = new Size(w, h);
+            int w = Math.Min(860, wa.Width - 16);
+            int h = Math.Min(720, wa.Height - 40);
+            MinimumSize = new Size(800, 640);
             Size = new Size(w, h);
 
-            // --- верхняя фикс-панель: номер дела, префикс, дата, число должников и выбор образца ---
-            var topPanel = new Panel { Dock = DockStyle.Top, Height = 100 };
+            // --- ВЕРХНЯЯ ПАНЕЛЬ: РЕКВИЗИТЫ ДЕЛА ---
+            var topPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 56,
+                BackColor = Color.White
+            };
+            topPanel.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                    e.Graphics.DrawLine(pen, 0, topPanel.Height - 1, topPanel.Width, topPanel.Height - 1);
+            };
 
-            int y = 12;
-            topPanel.Controls.Add(new Label { Text = "Номер дела / приказа:", Location = new Point(12, y + 4), AutoSize = true });
+            topPanel.Controls.Add(new Label { Text = "Дело / приказ:", Location = new Point(14, 17), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Color.FromArgb(51, 65, 85) });
 
             cboNumPrefix = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(165, y),
-                Width = 75,
+                Location = new Point(122, 13),
+                Width = 72,
                 TabIndex = 0
             };
             cboNumPrefix.Items.AddRange(new object[] { "ВС№", "№", "дело №", "(пусто)" });
             cboNumPrefix.SelectedIndex = 0;
             topPanel.Controls.Add(cboNumPrefix);
 
-            txtNum = new TextBox { Location = new Point(245, y), Width = 185, TabIndex = 1 };
-            txtNum.Enter += (s, e) => SwitchToRussian();
+            txtNum = new TextBox { Location = new Point(198, 13), Width = 150, TabIndex = 1 };
+            txtNum.KeyPress += (s, e) => { if (e.KeyChar == '\\') e.KeyChar = '/'; };
+            txtNum.TextChanged += (s, e) =>
+            {
+                if (txtNum.Text.IndexOf('\\') >= 0)
+                {
+                    int sel = txtNum.SelectionStart;
+                    txtNum.Text = txtNum.Text.Replace('\\', '/');
+                    txtNum.SelectionStart = Math.Min(sel, txtNum.Text.Length);
+                }
+            };
             topPanel.Controls.Add(txtNum);
 
-            topPanel.Controls.Add(new Label { Text = "Дата дела:", Location = new Point(445, y + 4), AutoSize = true });
+            topPanel.Controls.Add(new Label { Text = "Дата дела:", Location = new Point(362, 17), AutoSize = true, ForeColor = Color.FromArgb(51, 65, 85) });
             dtpDate = new DateTimePicker
             {
-                Location = new Point(530, y),
-                Width = 140,
+                Location = new Point(438, 13),
+                Width = 125,
                 Format = DateTimePickerFormat.Custom,
                 CustomFormat = "dd.MM.yyyy",
                 MaxDate = new DateTime(2100, 12, 31),
@@ -2319,85 +2486,126 @@ namespace ZayavleniyaApp
             };
             topPanel.Controls.Add(dtpDate);
 
-            y += 42;
-            topPanel.Controls.Add(new Label { Text = "Должников:", Location = new Point(12, y + 3), AutoSize = true });
-            nudCount = new NumericUpDown { Location = new Point(105, y), Minimum = 1, Maximum = 6, Value = 1, Width = 50, TabIndex = 3 };
+            topPanel.Controls.Add(new Label { Text = "Должников:", Location = new Point(576, 17), AutoSize = true, ForeColor = Color.FromArgb(51, 65, 85) });
+            nudCount = new NumericUpDown { Location = new Point(660, 13), Minimum = 1, Maximum = 6, Value = 1, Width = 48, TabIndex = 3 };
             nudCount.ValueChanged += (s, e) => RebuildFio();
             topPanel.Controls.Add(nudCount);
 
-            topPanel.Controls.Add(new Label { Text = "Образец (авто):", Location = new Point(175, y + 3), AutoSize = true, ForeColor = Color.DimGray });
-            txtTemplate = new TextBox { Location = new Point(275, y), Width = 345, ReadOnly = true, TabStop = false };
+            txtTemplate = new TextBox { Visible = false };
             topPanel.Controls.Add(txtTemplate);
-            var btnBrowseTemplate = new Button { Text = "Выбрать...", Location = new Point(626, y - 1), Size = new Size(100, 28), TabStop = false };
+
+            btnBrowseTemplate = new Button
+            {
+                Text = "⚙ Шаблон...",
+                Location = new Point(topPanel.Width - 116, 12),
+                Size = new Size(100, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(248, 250, 252),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Font = new Font("Segoe UI", 9f),
+                TabStop = false
+            };
+            btnBrowseTemplate.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
             btnBrowseTemplate.Click += (s, e) => ChooseTemplate();
+            ttTemplate.SetToolTip(btnBrowseTemplate, "Образец заявления (.docx). Нажмите для смены.");
             topPanel.Controls.Add(btnBrowseTemplate);
 
-            // --- прокручиваемая середина ---
-            midPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            // --- СЕРЕДИНА С КАРТОЧКАМИ ---
+            midPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(248, 250, 252) };
+            midPanel.Resize += (s, e) => RepositionMiddle();
+
+            // КАРТОЧКА 1: Должники и представитель
+            pnlCardDebtors = CreateCardPanel();
+            var lblDebTitle = new Label
+            {
+                Text = "👤 Должники и представитель",
+                Location = new Point(16, 12),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42)
+            };
+            pnlCardDebtors.Controls.Add(lblDebTitle);
 
             fioTlp = new TableLayoutPanel
             {
-                Location = new Point(12, 8),
-                Width = 744,
+                Location = new Point(16, 38),
+                Width = 750,
                 ColumnCount = 2,
                 AutoSize = false,
                 ColumnStyles = { new ColumnStyle(SizeType.Absolute, 140), new ColumnStyle(SizeType.Percent, 100) }
             };
-            midPanel.Controls.Add(fioTlp);
+            pnlCardDebtors.Controls.Add(fioTlp);
 
             lblRepHint = new Label
             {
                 Text = "Представитель / законный интерес (необязательно):",
-                AutoSize = false,
-                Size = new Size(744, 24),
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(60, 60, 60)
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(71, 85, 105)
             };
-            midPanel.Controls.Add(lblRepHint);
+            pnlCardDebtors.Controls.Add(lblRepHint);
 
-            rbRepNone = new RadioButton { Text = "Без представителя", Location = new Point(12, 0), AutoSize = true, Checked = true, TabIndex = 20 };
-            rbRepFemale = new RadioButton { Text = "Женский (мать)", Location = new Point(175, 0), AutoSize = true, TabIndex = 21 };
-            rbRepMale = new RadioButton { Text = "Мужской (отец)", Location = new Point(320, 0), AutoSize = true, TabIndex = 22 };
-            rbRepCustom = new RadioButton { Text = "Свой вариант", Location = new Point(465, 0), AutoSize = true, TabIndex = 23 };
+            rbRepNone = new RadioButton { Text = "Без представителя", AutoSize = true, Checked = true, TabIndex = 20 };
+            rbRepFemale = new RadioButton { Text = "Женский (мать)", AutoSize = true, TabIndex = 21 };
+            rbRepMale = new RadioButton { Text = "Мужской (отец)", AutoSize = true, TabIndex = 22 };
+            rbRepCustom = new RadioButton { Text = "Свой вариант", AutoSize = true, TabIndex = 23 };
 
             rbRepNone.CheckedChanged += (s, e) => { if (rbRepNone.Checked) OnRepTypeChanged(); };
             rbRepFemale.CheckedChanged += (s, e) => { if (rbRepFemale.Checked) OnRepTypeChanged(); };
             rbRepMale.CheckedChanged += (s, e) => { if (rbRepMale.Checked) OnRepTypeChanged(); };
             rbRepCustom.CheckedChanged += (s, e) => { if (rbRepCustom.Checked) OnRepTypeChanged(); };
 
-            midPanel.Controls.AddRange(new Control[] { rbRepNone, rbRepFemale, rbRepMale, rbRepCustom });
+            pnlCardDebtors.Controls.AddRange(new Control[] { rbRepNone, rbRepFemale, rbRepMale, rbRepCustom });
 
             cboRep = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Width = 500,
+                Width = 520,
                 Visible = false,
                 TabIndex = 24
             };
-            midPanel.Controls.Add(cboRep);
+            pnlCardDebtors.Controls.Add(cboRep);
 
-            lblRepFio = new Label { Text = "ФИО ребёнка / представителя:", AutoSize = true, Visible = false };
-            midPanel.Controls.Add(lblRepFio);
+            lblRepFio = new Label { Text = "ФИО ребёнка / представителя:", AutoSize = true, Visible = false, ForeColor = Color.FromArgb(51, 65, 85) };
+            pnlCardDebtors.Controls.Add(lblRepFio);
             txtRepFio = new TextBox { Width = 350, Visible = false, TabIndex = 25, CharacterCasing = CharacterCasing.Upper };
             HookRussianLayout(txtRepFio);
-            midPanel.Controls.Add(txtRepFio);
+            pnlCardDebtors.Controls.Add(txtRepFio);
 
-            txtRepCustom = new TextBox { Width = 744, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right, Visible = false, TabIndex = 26 };
+            txtRepCustom = new TextBox { Width = 750, Visible = false, TabIndex = 26 };
             HookRussianLayout(txtRepCustom);
-            midPanel.Controls.Add(txtRepCustom);
+            pnlCardDebtors.Controls.Add(txtRepCustom);
+
+            midPanel.Controls.Add(pnlCardDebtors);
+
+            // КАРТОЧКА 2: Адрес объекта
+            pnlCardAddr = CreateCardPanel();
+
+            var lblAddrTitle = new Label
+            {
+                Text = "📍 Адрес объекта недвижимости",
+                Location = new Point(16, 12),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42)
+            };
+            pnlCardAddr.Controls.Add(lblAddrTitle);
 
             lblAddr = new Label
             {
-                Text = "Адрес объекта недвижимости (" + AddrPrefix + "):",
+                Text = AddrPrefix,
+                Location = new Point(16, 33),
                 AutoSize = true,
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(60, 60, 60)
+                Font = new Font("Segoe UI", 8.5f),
+                ForeColor = Color.FromArgb(100, 116, 139)
             };
-            midPanel.Controls.Add(lblAddr);
+            pnlCardAddr.Controls.Add(lblAddr);
 
-            lblStreet = new Label { Text = "Улица:", AutoSize = true };
-            midPanel.Controls.Add(lblStreet);
-            txtAddrStreet = new TextBox { Width = 220, TabIndex = 30, CharacterCasing = CharacterCasing.Upper };
+            int yAddr = 56;
+            lblStreet = new Label { Text = "Улица:", Location = new Point(16, yAddr + 3), AutoSize = true, ForeColor = Color.FromArgb(51, 65, 85) };
+            pnlCardAddr.Controls.Add(lblStreet);
+            txtAddrStreet = new TextBox { Location = new Point(70, yAddr), Width = 230, TabIndex = 30, CharacterCasing = CharacterCasing.Upper };
             txtAddrStreet.AutoCompleteCustomSource = _streetAc;
             txtAddrStreet.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             txtAddrStreet.AutoCompleteSource = AutoCompleteSource.CustomSource;
@@ -2407,26 +2615,27 @@ namespace ZayavleniyaApp
                 if (!string.IsNullOrWhiteSpace(txtAddrStreet.Text))
                     txtAddrStreet.Text = FormatStreet(txtAddrStreet.Text);
             };
-            midPanel.Controls.Add(txtAddrStreet);
+            pnlCardAddr.Controls.Add(txtAddrStreet);
 
-            lblHouse = new Label { Text = "Дом:", AutoSize = true };
-            midPanel.Controls.Add(lblHouse);
-            txtAddrHouse = new TextBox { Width = 70, TabIndex = 31, CharacterCasing = CharacterCasing.Upper };
+            lblHouse = new Label { Text = "Дом:", Location = new Point(312, yAddr + 3), AutoSize = true, ForeColor = Color.FromArgb(51, 65, 85) };
+            pnlCardAddr.Controls.Add(lblHouse);
+            txtAddrHouse = new TextBox { Location = new Point(352, yAddr), Width = 80, TabIndex = 31, CharacterCasing = CharacterCasing.Upper };
             HookRussianLayout(txtAddrHouse, true);
-            midPanel.Controls.Add(txtAddrHouse);
+            pnlCardAddr.Controls.Add(txtAddrHouse);
 
-            lblFlat = new Label { Text = "Кв.:", AutoSize = true };
-            midPanel.Controls.Add(lblFlat);
-            txtAddrFlat = new TextBox { Width = 65, TabIndex = 32, CharacterCasing = CharacterCasing.Upper };
+            lblFlat = new Label { Text = "Кв.:", Location = new Point(444, yAddr + 3), AutoSize = true, ForeColor = Color.FromArgb(51, 65, 85) };
+            pnlCardAddr.Controls.Add(lblFlat);
+            txtAddrFlat = new TextBox { Location = new Point(476, yAddr), Width = 70, TabIndex = 32, CharacterCasing = CharacterCasing.Upper };
             HookRussianLayout(txtAddrFlat, true);
-            midPanel.Controls.Add(txtAddrFlat);
+            pnlCardAddr.Controls.Add(txtAddrFlat);
 
             chkRoom = new CheckBox
             {
                 Text = "комн.",
+                Location = new Point(560, yAddr + 3),
                 AutoSize = true,
                 TabIndex = 33,
-                ForeColor = Color.FromArgb(60, 60, 60)
+                ForeColor = Color.FromArgb(51, 65, 85)
             };
             chkRoom.CheckedChanged += (s, e) =>
             {
@@ -2434,79 +2643,126 @@ namespace ZayavleniyaApp
                 if (chkRoom.Checked) txtAddrRoom.Focus();
                 else txtAddrRoom.Text = "";
             };
-            midPanel.Controls.Add(chkRoom);
+            pnlCardAddr.Controls.Add(chkRoom);
 
-            txtAddrRoom = new TextBox { Width = 65, Enabled = false, TabIndex = 34, CharacterCasing = CharacterCasing.Upper };
+            txtAddrRoom = new TextBox { Location = new Point(626, yAddr), Width = 65, Enabled = false, TabIndex = 34, CharacterCasing = CharacterCasing.Upper };
             HookRussianLayout(txtAddrRoom, true);
-            midPanel.Controls.Add(txtAddrRoom);
+            pnlCardAddr.Controls.Add(txtAddrRoom);
 
-            // Перенос солидарного взыскания вниз к суммам
-            chkSolid = new CheckBox
+            var lblAddrNote = new Label
             {
-                Text = "Солидарное взыскание (взыскать в солидарном порядке со всех должников)",
+                Text = "💡 Слэш ( / ) и точку можно ставить на любой раскладке. Клавиша \\ на русской раскладке сама ставит /",
+                Location = new Point(16, yAddr + 32),
                 AutoSize = true,
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                ForeColor = Color.DarkSlateBlue,
-                TabIndex = 40
+                Font = new Font("Segoe UI", 8.5f),
+                ForeColor = Color.FromArgb(100, 116, 139)
             };
-            midPanel.Controls.Add(chkSolid);
+            pnlCardAddr.Controls.Add(lblAddrNote);
+
+            midPanel.Controls.Add(pnlCardAddr);
+
+            // КАРТОЧКА 3: Суммы к взысканию
+            pnlCardSums = CreateCardPanel();
 
             lblSums = new Label
             {
-                Text = "Взыскать суммы:",
+                Text = "💰 Суммы к взысканию",
+                Location = new Point(16, 12),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42)
+            };
+            pnlCardSums.Controls.Add(lblSums);
+
+            chkSolid = new CheckBox
+            {
+                Text = "Солидарное взыскание (взыскать в солидарном порядке со всех должников)",
+                Location = new Point(16, 38),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(60, 60, 60)
+                ForeColor = Color.FromArgb(67, 56, 202),
+                TabIndex = 40
             };
-            midPanel.Controls.Add(lblSums);
+            pnlCardSums.Controls.Add(chkSolid);
 
-            chkOsn = new CheckBox { Text = "Основной долг", AutoSize = true, Checked = true, TabIndex = 41 };
-            txtOsn = new TextBox { Width = 200, TabIndex = 42 };
-            midPanel.Controls.Add(chkOsn); midPanel.Controls.Add(txtOsn);
+            chkOsn = new CheckBox { Text = "Основной долг:", Location = new Point(16, 68), AutoSize = true, Checked = true, TabIndex = 41 };
+            txtOsn = new TextBox { Location = new Point(185, 66), Width = 200, TabIndex = 42 };
+            pnlCardSums.Controls.Add(chkOsn); pnlCardSums.Controls.Add(txtOsn);
 
-            chkGos = new CheckBox { Text = "Госпошлина", AutoSize = true, Checked = false, TabIndex = 43 };
-            txtGos = new TextBox { Width = 200, TabIndex = 44 };
-            midPanel.Controls.Add(chkGos); midPanel.Controls.Add(txtGos);
+            chkGos = new CheckBox { Text = "Госпошлина:", Location = new Point(16, 98), AutoSize = true, Checked = false, TabIndex = 43 };
+            txtGos = new TextBox { Location = new Point(185, 96), Width = 200, TabIndex = 44 };
+            pnlCardSums.Controls.Add(chkGos); pnlCardSums.Controls.Add(txtGos);
 
-            chkSud = new CheckBox { Text = "Судебные расходы", AutoSize = true, Checked = false, TabIndex = 45 };
-            txtSud = new TextBox { Width = 200, TabIndex = 46 };
-            midPanel.Controls.Add(chkSud); midPanel.Controls.Add(txtSud);
+            chkSud = new CheckBox { Text = "Судебные расходы:", Location = new Point(16, 128), AutoSize = true, Checked = false, TabIndex = 45 };
+            txtSud = new TextBox { Location = new Point(185, 126), Width = 200, TabIndex = 46 };
+            pnlCardSums.Controls.Add(chkSud); pnlCardSums.Controls.Add(txtSud);
 
-            // --- нижняя панель ---
-            bottomBar = new Panel { Dock = DockStyle.Bottom, Height = 100, BackColor = Color.FromArgb(245, 246, 248) };
-            bottomBar.Controls.Add(new Label
+            var lblSumsNote = new Label
             {
-                Text = "Сохранять в: " + Path.Combine(_projectDir, "Новые заявления"),
-                Location = new Point(12, 8),
+                Text = "Формат: 15000,00 или 15000 (копейки можно вводить через запятую или точку)",
+                Location = new Point(16, 154),
                 AutoSize = true,
-                ForeColor = Color.DimGray
-            });
-            lblSaved = new Label
-            {
-                Text = "",
-                Location = new Point(14, 32),
-                AutoSize = true,
-                ForeColor = Color.Green
+                Font = new Font("Segoe UI", 8.5f),
+                ForeColor = Color.FromArgb(100, 116, 139)
             };
-            bottomBar.Controls.Add(lblSaved);
+            pnlCardSums.Controls.Add(lblSumsNote);
+
+            midPanel.Controls.Add(pnlCardSums);
+
+            // --- НИЖНЯЯ ПАНЕЛЬ ДЕЙСТВИЙ ---
+            bottomBar = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 60,
+                BackColor = Color.White
+            };
+            bottomBar.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                    e.Graphics.DrawLine(pen, 0, 0, bottomBar.Width, 0);
+            };
 
             btnAutofill = new Button
             {
-                Text = "Автозаполнение (тест)",
-                Size = new Size(170, 34),
-                Location = new Point(12, 56),
+                Text = "🎲 Тестовые данные",
+                Size = new Size(185, 40),
+                Location = new Point(16, 10),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(248, 250, 252),
+                ForeColor = Color.FromArgb(51, 65, 85),
+                Font = new Font("Segoe UI", 9.5f),
+                Cursor = Cursors.Hand,
                 TabIndex = 51
             };
+            btnAutofill.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
             btnAutofill.Click += (s, e) => Autofill();
+            ttTemplate.SetToolTip(btnAutofill, "Случайно заполнить все поля для проверки (Ctrl+Shift+T или F12)");
             bottomBar.Controls.Add(btnAutofill);
+
+            lblSaved = new Label
+            {
+                Text = "",
+                Location = new Point(212, 20),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(5, 150, 105)
+            };
+            bottomBar.Controls.Add(lblSaved);
 
             var btnOpenFolder = new Button
             {
-                Text = "📁 Открыть папку с заявлениями",
-                Size = new Size(240, 34),
-                Location = new Point(190, 56),
+                Text = "📁 Папка с заявлениями",
+                Size = new Size(210, 40),
+                Location = new Point(bottomBar.Width - 460, 10),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(51, 65, 85),
+                Font = new Font("Segoe UI", 9.5f),
+                Cursor = Cursors.Hand,
                 TabIndex = 52
             };
+            btnOpenFolder.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
             btnOpenFolder.Click += (s, e) =>
             {
                 string outDir = Path.Combine(_projectDir, "Новые заявления");
@@ -2518,14 +2774,18 @@ namespace ZayavleniyaApp
 
             var btnGen = new Button
             {
-                Text = "Создать заявление (Enter)",
-                Size = new Size(220, 36),
-                Location = new Point(bottomBar.Width - 234, 55),
-                BackColor = Color.FromArgb(232, 245, 233),
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                Text = "✔ Создать заявление (Enter)",
+                Size = new Size(224, 40),
+                Location = new Point(bottomBar.Width - 240, 10),
+                BackColor = Color.FromArgb(16, 185, 129),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 TabIndex = 50
             };
+            btnGen.FlatAppearance.BorderSize = 0;
             btnGen.Click += (s, e) => Generate();
             bottomBar.Controls.Add(btnGen);
 
@@ -2537,6 +2797,8 @@ namespace ZayavleniyaApp
 
             string initialTemplate = FindTemplate();
             txtTemplate.Text = initialTemplate ?? "(будет создан автоматически)";
+            if (!string.IsNullOrEmpty(initialTemplate))
+                ttTemplate.SetToolTip(btnBrowseTemplate, "Образец: " + Path.GetFileName(initialTemplate) + "\n" + initialTemplate);
         }
 
         void OnRepTypeChanged()
@@ -2569,6 +2831,8 @@ namespace ZayavleniyaApp
                 {
                     _customTemplatePath = ofd.FileName;
                     txtTemplate.Text = ofd.FileName;
+                    if (ttTemplate != null && btnBrowseTemplate != null)
+                        ttTemplate.SetToolTip(btnBrowseTemplate, "Образец: " + Path.GetFileName(ofd.FileName) + "\n" + ofd.FileName);
                 }
             }
         }
@@ -2588,8 +2852,8 @@ namespace ZayavleniyaApp
                 fioTlp.RowCount++;
                 fioTlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
                 string cap = n == 1 ? "Должник (ФИО):" : ("Должник " + (i + 1) + ":");
-                fioTlp.Controls.Add(new Label { Text = cap, TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill, Margin = new Padding(3, 6, 3, 3) }, 0, row);
-                var tb = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(3, 5, 25, 5), TabIndex = 10 + i, CharacterCasing = CharacterCasing.Upper };
+                fioTlp.Controls.Add(new Label { Text = cap, TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill, Margin = new Padding(3, 6, 3, 3), Font = new Font("Segoe UI", 9.5f) }, 0, row);
+                var tb = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(3, 5, 25, 5), TabIndex = 10 + i, CharacterCasing = CharacterCasing.Upper, Font = new Font("Segoe UI", 9.5f) };
                 HookRussianLayout(tb);
                 fioTlp.Controls.Add(tb, 1, row);
                 fioInputs.Add(tb);
@@ -2601,16 +2865,20 @@ namespace ZayavleniyaApp
 
         void RepositionMiddle()
         {
-            int y = fioTlp.Bottom + 12;
+            if (fioTlp == null || pnlCardDebtors == null || pnlCardAddr == null || pnlCardSums == null) return;
 
-            lblRepHint.Location = new Point(12, y);
-            y += 26;
+            int cardWidth = Math.Max(760, midPanel.ClientSize.Width - 36);
+            fioTlp.Width = cardWidth - 32;
 
-            rbRepNone.Location = new Point(12, y);
-            rbRepFemale.Location = new Point(175, y);
-            rbRepMale.Location = new Point(325, y);
-            rbRepCustom.Location = new Point(475, y);
-            y += 32;
+            int yDeb = fioTlp.Bottom + 12;
+            lblRepHint.Location = new Point(16, yDeb);
+            yDeb += 24;
+
+            rbRepNone.Location = new Point(16, yDeb);
+            rbRepFemale.Location = new Point(180, yDeb);
+            rbRepMale.Location = new Point(320, yDeb);
+            rbRepCustom.Location = new Point(460, yDeb);
+            yDeb += 30;
 
             bool isGender = rbRepFemale.Checked || rbRepMale.Checked;
             bool isCustom = rbRepCustom.Checked;
@@ -2622,43 +2890,27 @@ namespace ZayavleniyaApp
 
             if (isGender)
             {
-                cboRep.Location = new Point(12, y);
-                y += 34;
-                lblRepFio.Location = new Point(12, y + 4);
-                txtRepFio.Location = new Point(255, y);
-                y += 36;
+                cboRep.Location = new Point(16, yDeb);
+                yDeb += 32;
+                lblRepFio.Location = new Point(16, yDeb + 4);
+                txtRepFio.Location = new Point(235, yDeb);
+                yDeb += 34;
             }
             else if (isCustom)
             {
-                txtRepCustom.Location = new Point(12, y);
-                y += 34;
+                txtRepCustom.Location = new Point(16, yDeb);
+                txtRepCustom.Width = cardWidth - 32;
+                yDeb += 34;
             }
 
-            lblAddr.Location = new Point(12, y);
-            y += 26;
+            pnlCardDebtors.Size = new Size(cardWidth, yDeb + 14);
+            pnlCardDebtors.Location = new Point(16, 12);
 
-            lblStreet.Location = new Point(12, y + 3);
-            txtAddrStreet.Location = new Point(68, y);
+            pnlCardAddr.Size = new Size(cardWidth, 122);
+            pnlCardAddr.Location = new Point(16, pnlCardDebtors.Bottom + 12);
 
-            lblHouse.Location = new Point(300, y + 3);
-            txtAddrHouse.Location = new Point(345, y);
-
-            lblFlat.Location = new Point(425, y + 3);
-            txtAddrFlat.Location = new Point(458, y);
-
-            chkRoom.Location = new Point(535, y + 3);
-            txtAddrRoom.Location = new Point(598, y);
-            y += 42;
-
-            chkSolid.Location = new Point(12, y);
-            y += 32;
-
-            lblSums.Location = new Point(12, y);
-            y += 26;
-
-            chkOsn.Location = new Point(16, y); txtOsn.Location = new Point(190, y - 2); y += 34;
-            chkGos.Location = new Point(16, y); txtGos.Location = new Point(190, y - 2); y += 34;
-            chkSud.Location = new Point(16, y); txtSud.Location = new Point(190, y - 2);
+            pnlCardSums.Size = new Size(cardWidth, 185);
+            pnlCardSums.Location = new Point(16, pnlCardAddr.Bottom + 12);
         }
 
         string RndFio()
@@ -2780,8 +3032,8 @@ namespace ZayavleniyaApp
                 string street = FormatStreet(txtAddrStreet.Text);
                 RegisterStreet(street);
                 string house = txtAddrHouse.Text.Trim();
-                string flat = FixLatinHomoglyphs(FixLayout(txtAddrFlat.Text.Trim())).ToUpperInvariant();
-                string room = chkRoom.Checked ? FixLatinHomoglyphs(FixLayout(txtAddrRoom.Text.Trim())).ToUpperInvariant() : "";
+                string flat = FixAddressNumber(txtAddrFlat.Text.Trim()).ToUpperInvariant();
+                string room = chkRoom.Checked ? FixAddressNumber(txtAddrRoom.Text.Trim()).ToUpperInvariant() : "";
 
                 if (string.IsNullOrEmpty(street) && string.IsNullOrEmpty(house))
                     throw new ArgumentException("Впишите адрес (улицу и дом).");

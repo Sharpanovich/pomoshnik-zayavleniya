@@ -31,18 +31,28 @@ namespace GitHubUploaderApp
         string _projectDir;
 
         const string DefaultReleaseNotes =
-@"### 🚀 Возможности и обновления (версия 1.0.0):
+@"### 🚀 Новое в версии 1.1.0:
 
-- **🏛 Встроенный эталон заявления:** оригинальные реквизиты ООО «ЛУКОЙЛ-Волгоградэнерго» (ОСП по Камышинскому и Ольховскому районам, судебный пристав О.Н. Брушко, представитель И.А. Николенко, ст. 36 ФЗ № 229, настоящий р/с ВТБ) зашиты в саму программу — работает на любом чистом ПК.
-- **⌨ Авто-переключение и авто-перевод раскладки клавиатуры:** независимо от языка Windows, в полях ФИО и адреса всегда печатается правильный русский текст (QWERTY ➔ ЙЦУКЕН на лету).
-- **🔤 Авто-КАПС:** автоматический ввод заглавными буквами для всех фамилий и адресов.
-- **🏠 Умное форматирование адреса:**
-  - Авто-приписка улицы (`ул`)
-  - Нормализация номера дома в формат `дом №...` (включая литеры `дом №17А`)
-  - Поддержка комнат (`комн.`) и квартир (`кв.`)
-- **📍 Самообучающаяся база адресов:** более 80 улиц и микрорайонов Камышина с автосохранением новых в `улицы.txt`.
-- **⚡ Скоростной ввод документов:** тихое сохранение без блокирующих окон, навигация по Tab, мгновенное сохранение по Enter и автовозврат фокуса в номер дела.
-- **🛠 Сборка в 1 клик:** компиляция на любом ПК через `СБОРКА ПРОГРАММЫ.bat` без установки сторонних программ.";
+#### ⌨ Свобода раскладки клавиатуры и исправление ввода:
+- **Свободный ввод без принудительной раскладки:** Программа больше не перехватывает язык Windows и не сбрасывает раскладку на русскую при вводе данных, переходе между полями или открытии окон. Вы можете комфортно вводить текст на любой раскладке.
+- **Корректные адреса с дробями, точками и запятыми:** Исправлена ошибка, из-за которой не сохранялись специальные символы в номерах домов и квартир. Теперь адреса вида `1/7`, `3.4`, `8,3`, а также литерные номера (`дом №17А`) сохраняются в точности так, как введено.
+- **Удобный ввод слэша на русской раскладке:** При наборе адреса на русской раскладке клавиша `\` (обратный слэш) автоматически подставляет `/` (прямой слэш). Переключать язык ради одного символа больше не нужно!
+- **Интеллектуальная транслитерация текста:** Сохранено исправление случайного набора ФИО и улиц латинскими буквами («dmitriev» ➔ «ДМИТРИЕВ»), при этом алгоритм стал полностью безопасным для цифр, дробей и знаков препинания.
+
+#### 🎨 Новый современный и понятный интерфейс:
+- **Карточная компоновка полей:** Все реквизиты сгруппированы в аккуратные карточки:
+  - 👤 *Должники и представитель* (номер дела, выбор префикса, список должников, заявитель и взыскатель).
+  - 🏠 *Адрес объекта недвижимости* (улица с авто-припиской, дом в формате «дом №...», квартира/комната с поддержкой дробей).
+  - 💰 *Суммы к взысканию* (основной долг, пени, госпошлина и автоматический расчет итоговой суммы).
+- **Чистая шапка окна генератора:** Убраны громоздкие технические пути к файлам. Выбор образца оформлен компактной кнопкой `⚙ Шаблон...`.
+- **Быстрое автозаполнение тестами:** На панель действий добавлена заметная кнопка `🎲 Тестовые данные` (горячие клавиши `Ctrl+Shift+T` и `F12`) для мгновенного заполнения формы реальными демонстрационными реквизитами для проверки генерации.
+- **Крупная кнопка сохранения:** Акцентная кнопка `✔ Создать заявление (Enter)` обеспечивает максимальную скорость работы оператора.
+- **Быстрый доступ к папкам:** В главном окне добавлены кнопки быстрого открытия папок «Новые заявления», «Исходные заявления» и «Исправленные заявления».
+
+#### 🛠 Надежность и переносимость:
+- 100% совместимость с эталонным образцом Word `094729862.docx`.
+- Автономная работа на любом ПК с Windows без установки дополнительных библиотек (.NET Framework 4.8 / 4.0).
+- Быстрая компиляция в 1 клик через `СБОРКА ПРОГРАММЫ.bat`.";
 
         public UploaderForm()
         {
@@ -176,7 +186,7 @@ namespace GitHubUploaderApp
             {
                 Text = "  2. Публикация релиза (GitHub Release для скачивания)  ",
                 Location = new Point(16, y),
-                Size = new Size(700, 265),
+                Size = new Size(700, 285),
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(33, 37, 41)
             };
@@ -212,7 +222,7 @@ namespace GitHubUploaderApp
 
             txtTag = new TextBox
             {
-                Text = "v1.0.0",
+                Text = "v1.1.0",
                 Location = new Point(95, ry),
                 Size = new Size(95, 26),
                 Font = new Font("Segoe UI", 9.5f)
@@ -222,41 +232,97 @@ namespace GitHubUploaderApp
             grpRelease.Controls.Add(new Label
             {
                 Text = "Название релиза:",
-                Location = new Point(210, ry + 3),
+                Location = new Point(205, ry + 3),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9f, FontStyle.Regular)
             });
 
             txtReleaseTitle = new TextBox
             {
-                Text = "Помощник по заявлениям v1.0.0",
-                Location = new Point(335, ry),
-                Size = new Size(345, 26),
+                Text = "Помощник по заявлениям v1.1.0 — Исправление раскладки и новый интерфейс",
+                Location = new Point(325, ry),
+                Size = new Size(355, 26),
                 Font = new Font("Segoe UI", 9.5f)
             };
             grpRelease.Controls.Add(txtReleaseTitle);
             ry += 32;
 
-            grpRelease.Controls.Add(new Label
+            var lblNotes = new Label
             {
                 Text = "Описание релиза / Что нового (Markdown):",
-                Location = new Point(14, ry),
+                Location = new Point(14, ry + 4),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9f, FontStyle.Regular)
-            });
-            ry += 20;
+            };
+            grpRelease.Controls.Add(lblNotes);
+
+            var btnPresetV11 = new Button
+            {
+                Text = "✨ Данные v1.1.0",
+                Location = new Point(365, ry),
+                Size = new Size(130, 26),
+                Font = new Font("Segoe UI", 8.5f),
+                BackColor = Color.FromArgb(235, 243, 255),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnPresetV11.FlatAppearance.BorderColor = Color.FromArgb(180, 205, 240);
+            btnPresetV11.Click += (s, e) =>
+            {
+                txtTag.Text = "v1.1.0";
+                txtReleaseTitle.Text = "Помощник по заявлениям v1.1.0 — Исправление раскладки и новый интерфейс";
+                txtReleaseNotes.Text = DefaultReleaseNotes;
+                AppendLog("Загружены стандартные данные релиза v1.1.0.");
+            };
+            grpRelease.Controls.Add(btnPresetV11);
+
+            var btnLoadFile = new Button
+            {
+                Text = "📂 Из release_notes.txt",
+                Location = new Point(505, ry),
+                Size = new Size(175, 26),
+                Font = new Font("Segoe UI", 8.5f),
+                BackColor = Color.FromArgb(245, 245, 245),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnLoadFile.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnLoadFile.Click += (s, e) =>
+            {
+                string defFile = Path.Combine(_projectDir, "release_notes.txt");
+                if (File.Exists(defFile) && (ModifierKeys & Keys.Shift) != Keys.Shift)
+                {
+                    LoadReleaseInfoFromFile(defFile, true);
+                }
+                else
+                {
+                    using (var ofd = new OpenFileDialog())
+                    {
+                        ofd.InitialDirectory = _projectDir;
+                        ofd.Filter = "Текстовые файлы (*.txt;*.md)|*.txt;*.md|Все файлы (*.*)|*.*";
+                        ofd.FileName = "release_notes.txt";
+                        ofd.Title = "Выберите файл с описанием релиза";
+                        if (ofd.ShowDialog(this) == DialogResult.OK)
+                        {
+                            LoadReleaseInfoFromFile(ofd.FileName, true);
+                        }
+                    }
+                }
+            };
+            grpRelease.Controls.Add(btnLoadFile);
+            ry += 30;
 
             txtReleaseNotes = new TextBox
             {
                 Location = new Point(14, ry),
-                Size = new Size(668, 110),
+                Size = new Size(668, 120),
                 Multiline = true,
                 ScrollBars = ScrollBars.Vertical,
                 Text = DefaultReleaseNotes,
                 Font = new Font("Segoe UI", 9f)
             };
             grpRelease.Controls.Add(txtReleaseNotes);
-            ry += 118;
+            ry += 128;
 
             chkAttachExe = new CheckBox
             {
@@ -279,7 +345,7 @@ namespace GitHubUploaderApp
             grpRelease.Controls.Add(chkAttachZip);
 
             pnlScroll.Controls.Add(grpRelease);
-            y += 275;
+            y += 295;
 
             // --- Кнопка запуска ---
             btnUpload = new Button
@@ -322,6 +388,82 @@ namespace GitHubUploaderApp
 
             Controls.Add(pnlScroll);
             Controls.Add(pnlTop);
+
+            // Автоматическая загрузка описания из release_notes.txt, если файл существует
+            string autoReleaseFile = Path.Combine(_projectDir, "release_notes.txt");
+            if (File.Exists(autoReleaseFile))
+            {
+                LoadReleaseInfoFromFile(autoReleaseFile, false);
+            }
+        }
+
+        void LoadReleaseInfoFromFile(string filePath, bool notify)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    if (notify)
+                        MessageBox.Show("Файл не найден:\n" + filePath, "Загрузка данных", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+                string tag = null;
+                string title = null;
+                var bodyLines = new List<string>();
+                bool inBody = false;
+
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string line = lines[i];
+                    if (!inBody)
+                    {
+                        if (line.StartsWith("TAG:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            tag = line.Substring(4).Trim();
+                            continue;
+                        }
+                        if (line.StartsWith("TITLE:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            title = line.Substring(6).Trim();
+                            continue;
+                        }
+                        if (line.Trim() == "---")
+                        {
+                            inBody = true;
+                            continue;
+                        }
+                    }
+                    bodyLines.Add(line);
+                }
+
+                if (!string.IsNullOrEmpty(tag)) txtTag.Text = tag;
+                if (!string.IsNullOrEmpty(title)) txtReleaseTitle.Text = title;
+
+                string body = string.Join("\r\n", bodyLines.ToArray()).Trim();
+                if (!string.IsNullOrEmpty(body))
+                {
+                    txtReleaseNotes.Text = body;
+                }
+
+                AppendLog("Загружены данные релиза из файла: " + Path.GetFileName(filePath));
+                if (notify)
+                {
+                    MessageBox.Show(
+                        string.Format("Данные релиза успешно загружены!\n\nФайл: {0}\nТег: {1}\nНазвание: {2}",
+                            Path.GetFileName(filePath), txtTag.Text, txtReleaseTitle.Text),
+                        "Данные релиза загружены",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendLog("Ошибка чтения файла релиза: " + ex.Message);
+                if (notify)
+                    MessageBox.Show("Ошибка при чтении файла:\n" + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         void AppendLog(string msg)
@@ -449,6 +591,7 @@ namespace GitHubUploaderApp
                 "СБОРКА ПРОГРАММЫ.bat",
                 "улицы.txt",
                 "README.md",
+                "release_notes.txt",
                 ".gitignore",
                 "GitHubUploader.cs",
                 "Шаблоны\\094729862.docx"
@@ -623,6 +766,7 @@ namespace GitHubUploaderApp
                     {
                         "Помощник по заявлениям.exe",
                         "README.md",
+                        "release_notes.txt",
                         "улицы.txt",
                         "Шаблоны\\094729862.docx",
                         "СБОРКА ПРОГРАММЫ.bat",
